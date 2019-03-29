@@ -18,7 +18,7 @@ function writeUpdate() {
 function getToken(urlParams,callback) {
   return $.ajax({
     //url: 'https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?',
-    url: 'http://localhost:9090/jwttokengenerator?',
+    url: 'https://box-heroku-token-generator.herokuapp.com/jwttokengenerator?',
     headers: {},
     type: 'get',
     data:urlParams,
