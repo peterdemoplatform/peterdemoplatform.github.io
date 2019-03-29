@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<style>
+
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #FFFFFF;
+  background-color: #0062D5;
+}
+
+li {
+  float: left;
+   border-right: 1px solid #bbb;
+}
+
+li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+li a:hover {
+  background-color: #00D9EC;
+  color: #ffffff;
+}
+
+.active{
+    background-color: #343859;
+    color: white;
+}
+.activep {
+    background-color: #343859; !important
+    color: white;
+
+}
+
+p {
+    color: #54698D;
+    font-family: "Lato", "Helvetica", "Arial", sans-serif;
+    margin-block-start:0em;
+    margin-block-end:0em;
+
+}
+
+</style>
+<script>
+$(document).ready(function() {
+  var links = document.getElementsByTagName("a");
+
+console.log(links.length);
+for(var i = 0; i < links.length; i++) {
+console.log(links[i].innerHTML);
+links[i].addEventListener("click", function() {
+  var current = document.getElementsByClassName("active");
+  var currentp = document.getElementsByClassName("activep");
+  current[0].className = current[0].className.replace("active", "");
+  currentp[0].className = currentp[0].className.replace("activep", "");
+  this.className = "active";
+  this.parentNode.className='activep';
+});
+}
+});
+</script>
+</head>
+<body style="margin:0px">
+
+
+<ul>
+
+  <li><p class="activep"><a class="active" href="../pages/folder.html" target="main">Folder</a></p></li>
+  <li><p><a href="../pages/events.html" target="main">Events</a></p></li>
+  <li><p><a href="../pages/map_folder.html" target="main">Map</a></p></li>
+  <li><p><a href="../pages/move.html" target="main">Move</a></p></li>
+
+  <li><p><a href="login.html" target="_top">Logout</a></p></li>
+
+
+
+
+
+</ul>
+
+</body>
+</html>

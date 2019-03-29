@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" >
+
+<head>
+  <meta charset="UTF-8">
+  <title>Sample vertical navigation</title>
+
+
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans:600'>
+<link rel="stylesheet" href="../css/login.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="../js/box.js"></script>
+<script>
+
+  //Change this to change Application context
+
+  var clientId="";
+  $(document).ready(function() {
+      let searchParams = new URLSearchParams(window.location.search)
+      clientId=searchParams.get("clientId");
+
+      $('#userlogin').on('submit', (function(ev) {
+        if(clientId=='') {
+          $("#errormessage").html("No clientId provided");
+        }
+        else {
+          sessionStorage.clear();
+          ev.preventDefault();
+          $("#signbutton").hide();
+          $("#loader").show();
+          var userLogin = $("#userLogin").val();
+          var password = $("#passLogin").val();
+          var urlParams = "clientId=" + clientId + "&userEmail=" + userLogin + "&password=" + password;
+          login('../horizontal/main.html',urlParams);
+
+        }
+
+    }));
+  });
+
+</script>
+</head>
+
+<bod>
+
+  <div class="login-wrap">
+	<div class="login-html">
+		<input id="tab-1" type="radio" name="tab" class="sign-in" checked><label for="tab-1" class="tab">Sign In</label>
+		<input id="tab-2" type="radio" name="tab" class="sign-up"><label for="tab-2" class="tab">Sign Up</label>
+
+		<div class="login-form">
+			<div class="sign-in-htm">
+          <form id='userlogin' method="get" action="#">
+        <p></p>
+				<div class="group">
+					<label for="user" class="label">Username</label>
+					<input id="userLogin" type="text" class="input" required>
+				</div>
+				<div class="group">
+					<label for="pass" class="label">Password</label>
+					<input id="passLogin" type="password" class="input" data-type="password" required>
+				</div>
+				<div class="group">
+					<input id="check" type="checkbox" class="check" checked>
+					<label for="checkLogin"><span class="icon"></span> Keep me Signed in</label>
+				</div>
+				<div class="group">
+					<input id="signbutton" type="submit" class="button" value="Sign In">
+          <img align=center id="loader" src="/templates/img/progressb.gif" style="display:none;">
+          <span id="errormessage"></span>
+				</div>
+				<div class="foot-lnk">
+				</div>
+        </form>
+			</div>
+
+
+		</div>
+	</div>
+</div>
+
+
+
+
+</body>
+
+</html>

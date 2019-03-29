@@ -1,0 +1,432 @@
+<html>
+<title>Events Viewer</title>
+
+<head>
+  <!-- jQuery -->
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+  <link href='//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+  <script src='//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js'></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.18/sl-1.2.6/datatables.min.css" />
+
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.18/sl-1.2.6/datatables.min.js"></script>
+
+  <script src="https://cdn01.boxcdn.net/platform/preview/1.53.1/en-US/preview.js"></script>
+  <link rel="stylesheet" href="https://cdn01.boxcdn.net/platform/preview/1.53.1/en-US/preview.css" />
+
+  <script>
+    var stream_position = "0"; //sessionStorage.getItem("streamPosition");
+    var t;
+    var modal;
+    $(document).ready(function() {
+      $("#contentlist").hide();
+      modal = document.getElementById('myModal');
+      // Get the button that opens the modal
+      var span = document.getElementsByClassName("close")[0];
+
+
+      // When the user clicks on <span> (x), close the modal
+      span.onclick = function() {
+        modal.style.display = "none";
+      }
+
+      // When the user clicks anywhere outside of the modal, close it
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+      $('ul.tabs li').click(function() {
+        var tab_id = $(this).attr('data-tab');
+        $('ul.tabs li').removeClass('current');
+        $('.tab-content').removeClass('current');
+        $(this).addClass('current');
+        $("#" + tab_id).addClass('current');
+      });
+
+
+
+      var t2 = $('#contentlist2').DataTable({
+        "order": [
+          [1, "desc"]
+        ],
+        "select": true,
+        "dom": "Bfrtip",
+        "pageLength": 15,
+        "ajax": {
+          "url": "https://api.box.com/2.0/events?stream_type=admin_logs&event_type=FILE_MARKED_MALICIOUS",
+          "type": "GET",
+          "dataSrc": "entries",
+          "headers": {
+            "Authorization": "Bearer " + sessionStorage.getItem("adminAccessToken")
+          }
+        },
+        "columns": [{
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type) {
+                return row.source.item_name;
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type) {
+                var date = new Date(Date.parse(row.created_at));
+                return date.toLocaleString('en-GB', {
+                  timeZone: 'UTC'
+                });
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type) {
+                return row.created_by.name + " (" + row.created_by.login + ")";
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type) {
+                return row.source.parent.name;
+              }
+              return "";
+            }
+          }
+        ]
+      });
+      $('#contentlist tbody').on('click', 'td', function() {
+        console.log('clicked:' + this.parentNode.className);
+        var data = t.row(this.parentNode).data();
+        console.log("d:" + JSON.stringify(data));
+        var id = data.source.id;
+        console.log("i:" + id);
+        var preview = new Box.Preview();
+        preview.show(id, sessionStorage.getItem("accessToken"), {
+          container: ".modal-body"
+        });
+        modal.style.display = "block";
+      });
+      ajaxCalls();
+
+    });
+    var finalData=[];
+    function ajaxCalls() {
+      $.ajax({
+        type: "GET",
+        url: "https://api.box.com/2.0/events?limit=500&stream_position=" + stream_position,
+        headers: {
+          "Authorization": "Bearer " + sessionStorage.getItem("accessToken")
+        },
+        success: function(data) {
+          //console.log('ajax ' + data.entries.length);
+          if(data.entries.length>1) {
+            $.extend(finalData,data.entries);
+            stream_position=data.next_stream_position;
+            ajaxCalls();
+          }
+          else {
+            //console.log('events now ' + data.entries.length);
+            //console.log(finalData);
+            loadEvents(finalData);
+            $(".loader").hide();
+            $("#contentlist").show();
+            $("#contentlist").width('100%');
+          }
+        }
+
+      });
+    }
+    var i = 0;
+    function loadEvents(data) {
+      console.log('events');
+      t = $('#contentlist').DataTable({
+        "order": [
+          [1, "desc"]
+        ],
+        "select": true,
+        "dom": "Bfrtip",
+        "pageLength": 15,
+        "data": data,
+        "columnDefs": [{
+          "targets": [5],
+          "visible": false,
+          "searchable": false
+        }],
+        "columns": [{
+            "data": "event_type"
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type) {
+                var date = new Date(Date.parse(row.created_at));
+                return date.toLocaleString('en-GB', {
+                  timeZone: 'UTC'
+                });
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              //console.log("" + (i++) + ":" + row.source.type);
+              if (row.event_type && row.event_type.startsWith('ITEM_') && row.source.type=='file') {
+                  return "<img class='preview' box-id='" + row.source.id + "' src='../img/preview_icon.png'/>";
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type && row.event_type.startsWith('ITEM_')) {
+                return row.source.name;
+              } else if (row.event_type && row.event_type.startsWith("COLLAB_")) {
+                return row.source.item.name;
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type && row.event_type.startsWith("COLLAB_")) {
+                return row.source.accessible_by.name + " as " + row.source.role; // + " on " + row.item.type + " " + row.item.name;
+              }
+              return "";
+            }
+          },
+          {
+            "data": null,
+            render: function(data, type, row) {
+              if (row.event_type && row.source.item_id) {
+                return row.source.item_id;
+              }
+              return "";
+            }
+          }
+          //,
+          //{
+          //  "data":null,
+          //    render: function(data, type, row) {
+          //      if(row.source) {
+          //        return JSON.stringify(row.source);
+          //      }
+          //  }
+          //}
+        ]
+      });
+    }
+  </script>
+  <style>
+    th {
+      font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+    }
+
+    td {
+      font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    ul.tabs {
+      margin: 0px;
+      padding: 0px;
+      list-style: none;
+    }
+
+    ul.tabs li {
+      background: none;
+      color: #222;
+      display: inline-block;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+    }
+
+    ul.tabs li.current {
+      background: #ededed;
+      color: #222;
+      font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+    }
+
+    .tab-content {
+      display: none;
+      background: #ededed;
+      padding: 15px;
+    }
+
+    .tab-content.current {
+      display: inherit;
+    }
+
+    .tab-content {
+      display: none;
+      background: #ededed;
+      padding: 15px;
+    }
+
+    .tab-content.current {
+      display: inherit;
+    }
+
+    .sameline {
+      display: inline;
+    }
+
+    /* The Modal (background) */
+
+    .modal {
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      /* Stay in place */
+      z-index: 1;
+      /* Sit on top */
+      padding-top: 50px;
+      /* Location of the box */
+      left: 0;
+      top: 0;
+      width: 90%;
+      /* Full width */
+      height: 100%;
+      /* Full height */
+      overflow: auto;
+      /* Enable scroll if needed */
+      background-color: rgb(0, 0, 0);
+      /* Fallback color */
+      background-color: rgba(0, 0, 0, 0.4);
+      /* Black w/ opacity */
+    }
+
+    /* Modal Content */
+
+    .modal-content {
+      position: relative;
+      background-color: #ffffff;
+      margin: auto;
+      height: 640px;
+      padding: 0;
+      border: 1px solid #888;
+      width: 100%;
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+      -webkit-animation-name: animatetop;
+      -webkit-animation-duration: 0.4s;
+      animation-name: animatetop;
+      animation-duration: 0.4s
+    }
+
+    /* Add Animation */
+
+    @-webkit-keyframes animatetop {
+      from {
+        top: -300px;
+        opacity: 0
+      }
+      to {
+        top: 0;
+        opacity: 1
+      }
+    }
+
+    @keyframes animatetop {
+      from {
+        top: -300px;
+        opacity: 0
+      }
+      to {
+        top: 0;
+        opacity: 1
+      }
+    }
+
+    /* The Close Button */
+
+    .close {
+      color: black;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .modal-header {
+      padding: 2px 8px;
+      background-color: #ffffff;
+      color: white;
+    }
+
+    .modal-body {
+      padding: 2px 8px;
+    }
+
+    .bp-header {
+      display: none;
+    }
+
+    .bp-header+.bp:not(.bp-is-fullscreen) {
+      top: 1px;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div style="padding: 5 5 5 5px;bgcolor='#F4F6F9';border: 1px solid #cdd4de;">
+    <ul class="tabs">
+      <li class="tab-link current" data-tab="tab-100">My Events <span class='loader'><img src='../img/ajax-loader_t.gif'/></span></li>
+    </ul>
+    <div id="tab-100" class="tab-content current">
+      <table id="contentlist" class="display" style="width:95%%">
+        <thead>
+
+          <th>Event</th>
+          <th>Created</th>
+          <th>-</th>
+          <th>Name</th>
+          <th>Details</th>
+
+
+        </thead>
+        <tbody>
+        </tbody>
+
+      </table>
+    </div>
+
+    </div>
+  </div>
+  <div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+
+      </div>
+
+    </div>
+</body>
+
+</html>

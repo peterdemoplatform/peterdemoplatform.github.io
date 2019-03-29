@@ -1,0 +1,75 @@
+
+<!--
+Author: W3layouts
+Author URL: http://w3layouts.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sample OAuth 2.0 third party page</title>
+<!-- for-mobile-apps -->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+    <script>
+
+
+  var params = new URLSearchParams(window.location.search);
+  var clientId=params.get("clientId");
+  $(document).ready(function(){
+
+      $.ajax({
+          method : 'get',
+          url: "https://bl2vhdoqzh.execute-api.eu-west-2.amazonaws.com/default/box-tokengenerator",
+          data: {authCode:params.get('auth'),id:params.get('id'),clientId:clientId},
+          crossDomain: true,
+          timeout:120000,
+          dataType:'jsonp',
+          cache: false,
+          beforeSend: function() {
+              $('#loader').show();
+
+           },
+           complete: function(){
+              $('#loader').hide();
+
+          },
+          success : function(response){
+            console.log("Success:" + JSON.stringify(response));
+            var spanA = $('<li />').html('Authcode:' + params.get("auth"));
+            var spanC = $('<li />').html('ClientId:' + params.get("clientId"));
+            var spanT = $('<li />').html( 'Token:' + response.token );
+            var spanR = $('<li />').html( 'Refresh token:' + response.token );
+            var ul = $("<ul/>").append(spanA).append(spanC).append(spanT).append(spanR);
+            $("#main").append(ul);
+            $('#loader').hide();
+          }
+          ,
+          error : function(err){
+            console.log(JSON.stringify(err));
+            console.log("error:" + err.message);
+
+          }
+      });
+   });
+
+
+</script>
+
+</head>
+<body>
+  <div class="content" id='main'>
+  <img id="loader" src='/templates/img/ajax-loader_t.gif' class="hidden"/>
+
+
+
+  </div>
+</body>
+</html>
